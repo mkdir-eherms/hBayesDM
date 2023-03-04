@@ -26,42 +26,42 @@ transformed data {
 
 parameters {
   // Group-level parameters
-  vector[5] mu_p;
+  vector[5] mu_pr;
   vector<lower=0>[5] sigma;
 
   // Normally distributed error for Matt trick
-  vector[N] phi_p;
-  vector[N] eta_p;
-  vector[N] rho_p;
-  vector[N] tau_p;
-  vector[N] lambda_p;
+  vector[N] phi_pr;
+  vector[N] eta_pr;
+  vector[N] rho_pr;
+  vector[N] tau_pr;
+  vector[N] lambda_pr;
 }
 
 transformed parameters {
   // Subject-level parameters with Matt trick
   vector<lower=0,upper=1>[N] phi;
-  vector<lower=0>[N] eta;
+  vector<lower=0> [N] eta;
   vector<lower=-0.5,upper=0.5>[N] rho;
   vector<lower=0>[N] tau;
-  vector<lower=0>[N] lambda;
+  vector<lower=0.5>[N] lambda;
 
-  phi = Phi_approx(mu_p[1] + sigma[1] * phi_p);
-  eta = Phi_approx(mu_p[2] + sigma[2] * eta_p);
-  rho = 0.5 - Phi_approx(mu_p[3] + sigma[3] * rho_p);
-  tau = exp(mu_p[4] + sigma[4] * tau_p);
-  lambda = exp(mu_p[5] + sigma[5] * lambda_p);
+  phi = Phi_approx(mu_pr[1] + sigma[1] * phi_pr);
+  eta = Phi_approx(mu_pr[2] + sigma[2] * eta_pr);
+  rho = 0.5 - Phi_approx(mu_pr[3] + sigma[3] * rho_pr);
+  tau = exp(mu_pr[4] + sigma[4] * tau_pr);
+  lambda = 0.5 + exp(mu_pr[5] + sigma[5] * lambda_pr);
 }
 
 model {
   // Prior
-  mu_p  ~ normal(0, 1);
+  mu_pr  ~ normal(0, 1);
   sigma ~ normal(0, 0.2); // cauchy(0, 5);
 
-  phi_p ~ normal(0, 1);
-  eta_p ~ normal(0, 1);
-  rho_p ~ normal(0, 1);
-  tau_p ~ normal(0, 1);
-  lambda_p ~ normal(0, 1);
+  phi_pr ~ normal(0, 1);
+  eta_pr ~ normal(0, 1);
+  rho_pr ~ normal(0, 1);
+  tau_pr ~ normal(0, 1);
+  lambda_pr ~ normal(0, 1);
 
   // Likelihood
   for (j in 1:N) {
@@ -95,6 +95,9 @@ model {
       n_succ += pumps[j, k] - explosion[j, k];
       n_pump += pumps[j, k];
 
+      // calculation of p_burst in original hbayesdm v1.1.1 ewmv stan file: 
+      //p_burst = phi[j] + (1 - exp(-n_pump * eta[j])) * ((0.0 + n_pump - n_succ) / n_pump - phi[j]);
+
       //revised calculation of p_burst used in Lasagna et al. (2021) to match Park et al (2021):
       p_burst = exp(-n_pump * eta[j]) * phi[j] + (1 - exp(-n_pump * eta[j])) * ((0.0 + n_pump - n_succ) / n_pump);
     }
@@ -103,11 +106,11 @@ model {
 
 generated quantities {
   // Actual group-level mean
-  real<lower=0> mu_phi = Phi_approx(mu_p[1]);
-  real<lower=0> mu_eta = Phi_approx(mu_p[2]);
-  real<lower=-0.5,upper=0.5> mu_rho = 0.5 - Phi_approx(mu_p[3]);
-  real<lower=0> mu_tau = exp(mu_p[4]);
-  real<lower=0> mu_lambda = exp(mu_p[5]);
+  real<lower=0> mu_phi = Phi_approx(mu_pr[1]);
+  real<lower=0> mu_eta = Phi_approx(mu_pr[2]);
+  real<lower=-0.5,upper=0.5> mu_rho = 0.5 - Phi_approx(mu_pr[3]);
+  real<lower=0> mu_tau = exp(mu_pr[4]);
+  real<lower=0.5> mu_lambda = 0.5 + exp(mu_pr[5]);
 
   // Log-likelihood for model fit
   real log_lik[N];
@@ -131,7 +134,7 @@ generated quantities {
       log_lik[j] = 0;
 
       for (k in 1:Tsubj[j]) {
-        // real u_gain = 1;
+         // real u_gain = 1;
         // Reward values based on pump number
         row_vector[11] u_gain_array = [0.05, 0.15, 0.25, 0.55, 0.95, 1.45, 2.05, 2.75, 3.45, 4.25, 5.15];
         real u_loss;
@@ -158,10 +161,12 @@ generated quantities {
         n_succ += pumps[j, k] - explosion[j, k];
         n_pump += pumps[j, k];
 
+        // calculation of p_burst in original hbayesdm v1.1.1 ewmv stan file: 
+        //p_burst = phi[j] + (1 - exp(-n_pump * eta[j])) * ((0.0 + n_pump - n_succ) / n_pump - phi[j]);
+
         //revised calculation of p_burst used in Lasagna et al. (2021) to match Park et al (2021):
         p_burst = exp(-n_pump * eta[j]) * phi[j] + (1 - exp(-n_pump * eta[j])) * ((0.0 + n_pump - n_succ) / n_pump); 
       }
     }
   }
 }
-
