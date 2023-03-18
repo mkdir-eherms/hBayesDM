@@ -73,7 +73,7 @@ model {
     for (k in 1:Tsubj[j]) {
       // real u_gain = 1;
       // Reward values based on pump number
-      row_vector[11] u_gain_array = [0.05, 0.15, 0.25, 0.55, 0.95, 1.45, 2.05, 2.75, 3.45, 4.25, 5.15];
+      row_vector[11] u_gain_array = [0.05, 0.10, 0.10, 0.30, 0.40, .50, .60, .70, .70, .80, .90];
       real u_loss;
       real u_pump;
       real u_stop = 0;
@@ -134,7 +134,7 @@ generated quantities {
       for (k in 1:Tsubj[j]) {
          // real u_gain = 1;
         // Reward values based on pump number
-        row_vector[11] u_gain_array = [0.05, 0.15, 0.25, 0.55, 0.95, 1.45, 2.05, 2.75, 3.45, 4.25, 5.15];
+        row_vector[11] u_gain_array = [0.05, 0.10, 0.10, 0.30, 0.40, .50, .60, .70, .70, .80, .90];
         real u_loss;
         real u_pump;
         real u_stop = 0;
