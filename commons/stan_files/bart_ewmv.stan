@@ -145,7 +145,7 @@ generated quantities {
           u_loss = (l - 1);
 
           // Updated to use u_gain_array values
-          u_pump = (1 - p_burst) * u_gain_array[l] - lambda[j] * p_burst * u_loss + rho[j] * p_burst * (1 - p_burst) * (u_gain_array[l] + lambda[j] * u_loss)^2;
+          u_pump = (1 - p_burst) * u_gain_array[l] - lambda[j] * p_burst * u_loss * u_gain_array[l] + rho[j] * p_burst * (1 - p_burst) * (u_gain_array[l] + lambda[j] * u_loss * u_gain_array[l])^2;
           // u_stop always equals 0.
 
           delta_u = u_pump - u_stop;
